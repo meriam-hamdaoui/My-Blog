@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 // content
 import articles from "../content/article-content";
 import Articles from "../components/Articles";
+import NotFound from "./NotFound";
 
 const Article = () => {
   const { name } = useParams();
@@ -11,12 +12,7 @@ const Article = () => {
 
   let otherArticles = articles.filter((article) => article.name !== name);
 
-  if (!article)
-    return (
-      <h1 className="sm:text-2xl text-lg font-bold my-6 text-amber-600 text-center">
-        Article does not exist
-      </h1>
-    );
+  if (!article) return <NotFound />;
 
   return (
     <>
