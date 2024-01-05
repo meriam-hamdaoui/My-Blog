@@ -2,11 +2,14 @@ import React from "react";
 import { useParams } from "react-router-dom";
 // content
 import articles from "../content/article-content";
+import Articles from "../components/Articles";
 
 const Article = () => {
   const { name } = useParams();
   // find the article by name
   let article = articles.find((art) => art.name === name);
+
+  let otherArticles = articles.filter((article) => article.name !== name);
 
   if (!article)
     return (
@@ -16,7 +19,7 @@ const Article = () => {
     );
 
   return (
-    <div>
+    <>
       <h1 className="sm:text-4xl text-2xl font-bold my-6 text-gray-900">
         {article.title}
       </h1>
@@ -25,7 +28,13 @@ const Article = () => {
           {art}
         </p>
       ))}
-    </div>
+
+      <h1 className="sm:text-2xl text-lg font-bold mt-10 mb-2 text-gray-800">
+        Related Articles
+      </h1>
+
+      <Articles articles={otherArticles} />
+    </>
   );
 };
 
