@@ -32,28 +32,19 @@ exports.addComment = async (req, res) => {
     let { author, text } = req.body;
 
     await connectWithDB(async (db) => {
-      const articleByName = await db
-        .collection("articles")
-        .findOne({ name: articleName });
-
-      await db.collection("articles").updateOne(
+      const updatedArticle = await db.collection("articles").findOneAndUpdate(
         { name: articleName },
         {
-          $set: {
-            comments: [...articleByName.comments, { author, text }],
+          $push: {
+            comments: { author, text },
           },
-        }
+        },
+        { returnDocument: "after" } // To return the updated document
       );
 
-      const updatedArticle = await db
-        .collection("articles")
-        .findOne({ name: articleName });
-
-      res.status(200).json(updatedArticle);
+      setTimeout(() => res.status(200).json(updatedArticle), 2000);
     }, res);
   } catch (error) {
     res.status(400).json({ message: "ERROR updating article", error });
   }
 };
-// Add a new Article in the DB
-exports.addArticle = async (req, res) => {};
