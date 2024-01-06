@@ -9,94 +9,78 @@ const port = process.env.PORT || 8000;
 // lunch express app
 const app = express();
 
-// data
-// const articles = [
-//   {
-//     name: "learn-react",
-//     comments: [{ author: "souad", text: "I like this articles" }],
-//   },
-//   {
-//     name: "learn-node",
-//     comments: [{ author: "mariem", text: "It needs some improvement" }],
-//   },
-//   {
-//     name: "my-thoughts-on-learning-react",
-
-//     comments: [],
-//   },
-// ];
-
 // middlewares
 app.use(require("cors")()); // allow cross-origin requests
 app.use(express.json({ extended: false })); // parse request body as JSON
 
-// get all
-app.get("/api/articles", async (req, res) => {
+/** connect with DB function */
+const connectWithDB = async (operations, res) => {
   try {
-    // connect db
-    const client = await MongoClient.connect(process.env.DB_URI);
-    const articles = client.db("mernblog").collection("articles");
-
-    // find and return all documents in the 'articles' collection
-    const articleTab = await articles.find().toArray();
-
-    setTimeout(() => {
-      return res.status(200).json(articleTab);
-    }, 3000);
-  } catch (error) {
-    return res.status(500).json(error.message);
-  }
-});
-
-// get by name
-app.get("/api/articles/:name", async (req, res) => {
-  try {
-    const articleName = req.params.name;
-    // connect db
-    const client = await MongoClient.connect(process.env.DB_URI);
+    const client = new MongoClient(process.env.DB_URI);
     const db = client.db("mernblog");
-    const articleList = db.collection("articles");
-
-    // find and return all documents in the 'articles' collection
-    const articleByName = await articleList.findOne({ name: articleName });
-
-    if (!articleByName) res.status(404).json(articleByName);
-
-    if (articleByName)
-      setTimeout(() => res.status(200).json(articleByName), 2000);
-
+    await operations(db);
     client.close();
   } catch (error) {
     res.status(500).json(error.message);
   }
+};
+
+// get all
+app.get("/api/articles", async (req, res) =>
+  connectWithDB(async (db) => {
+    // const articleList = ;
+    const articles = await db.collection("articles").find().toArray();
+
+    setTimeout(() => res.status(200).json(articles), 2000);
+  }, res)
+);
+
+// get by name
+
+app.get("/api/articles/:name", async (req, res) => {
+  const articleName = req.params.name;
+
+  // Using connectWithDB to perform operations with the database
+  connectWithDB(async (db) => {
+    // const articleList = ;
+    const articleByName = await db
+      .collection("articles")
+      .findOne({ name: articleName });
+
+    if (!articleByName) {
+      res.status(404).json(articleByName);
+    } else {
+      setTimeout(() => res.status(200).json(articleByName), 2000);
+    }
+  }, res);
 });
 
 // add comment
-app.post("/api/articles/:name/add-comment", async (req, res) => {
-  try {
-    const articleName = req.params.name;
-    const { author, text } = req.body;
-    // connect db
-    const client = await MongoClient.connect(process.env.DB_URI);
-    const articles = await client.db("mernblog").collection("articles");
+// app.post("/api/articles/:name/add-comment", async (req, res) => {
+//   try {
+//     const articleName = req.params.name;
+//     const { author, text } = req.body;
+//     // connect db
+//     const client = await MongoClient.connect(process.env.DB_URI);
+//     const articles = await client.db("mernblog").collection("articles");
 
-    // find and return all documents in the 'articles' collection
-    const updateArticle = await articles.findOneAndUpdate({
-      name: articleName,
-      $comments: [...comments, { author, text }],
-    });
+//     // find and return all documents in the 'articles' collection
+//     const updateArticle = await articles.findOneAndUpdate({
+//       name: articleName,
+//       $comments: [...comments, { author, text }],
+//     });
 
-    if (!updateArticle) {
-      return res
-        .status(404)
-        .json({ message: "no article found with this name" });
-    }
+//     if (!updateArticle) {
+//       return res
+//         .status(404)
+//         .json({ message: "no article found with this name" });
+//     }
 
-    res.json(updateArticle.comments);
-  } catch (error) {
-    return res.status(500).json(error.message);
-  }
-});
+//     res.json(updateArticle.comments);
+//   } catch (error) {
+//     return res.status(500).json(error.message);
+//   }
+// });
 
 // listen
 app.listen(port, () => console.log("server started at " + port));
